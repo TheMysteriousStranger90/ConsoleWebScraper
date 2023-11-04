@@ -36,8 +36,7 @@ public class WebScraperService : IWebScraperService
     {
         try
         {
-            var encoding = Encoding.GetEncoding("windows-1251");
-            using (var writer = new StreamWriter(fileName, false, encoding))
+            using (var writer = new StreamWriter(fileName, false, Encoding.UTF8))
             {
                 HtmlTags.RemoveHtmlTags(writer, text);
             }

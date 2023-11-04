@@ -12,32 +12,33 @@ public class Controller
     private HttpClient _client;
     private string _htmlContent { get; set; }
     private string _url { get; set; }
-    public List<string> _innerURLs { get; set;  }
+    public List<string> _innerURLs { get; set; }
 
     private static string path1;
     private static string path2;
     private static string path3;
-    
+
     public Controller(IKernel kernel)
     {
         _webScraperService = kernel.Get<WebScraperService>();
         _client = new HttpClient();
         _innerURLs = new List<string>();
     }
-    
+
     public string PleaseEnterAValidUrl()
     {
         CreateSpecialFolder();
         Console.WriteLine("Please enter a valid URL: ");
         Console.WriteLine("\n");
-    
+
         _url = Console.ReadLine();
-    
+
         try
         {
             HttpResponseMessage response = _client.GetAsync(_url).Result;
             _htmlContent = response.Content.ReadAsStringAsync().Result;
-            Regex regExpression = new Regex("(?:href)=[\"|']?(.*?)[\"|'|>]+", RegexOptions.Singleline | RegexOptions.CultureInvariant);
+            Regex regExpression = new Regex("(?:href)=[\"|']?(.*?)[\"|'|>]+",
+                RegexOptions.Singleline | RegexOptions.CultureInvariant);
             if (regExpression.IsMatch(_htmlContent))
             {
                 foreach (Match match in regExpression.Matches(_htmlContent))
@@ -52,11 +53,11 @@ public class Controller
             Console.WriteLine("\nException Caught!");
             Console.WriteLine("Message :{0} ", e.Message);
         }
-    
+
         _webScraperService.SaveUrlsToDoc(path1, _innerURLs);
         _webScraperService.SaveContentToDoc(path2, _htmlContent);
-        _webScraperService.SaveImagesToDoc(path3,_htmlContent);
-        
+        _webScraperService.SaveImagesToDoc(path3, _htmlContent);
+
         return "Created";
     }
 
@@ -80,5 +81,4 @@ public class Controller
         Environment.Exit(0);
         return "Exiting the application...";
     }
-    
 }

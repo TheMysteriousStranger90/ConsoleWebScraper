@@ -8,7 +8,7 @@ public static class Printer
         text += "Menu guide:\n";
         Console.WriteLine(text);
     }
-    
+
     public static void MainMenu()
     {
         string menu = "\n1 --> Activate command\n";
