@@ -4,13 +4,31 @@ public static class Printer
 {
     public static void StartPage()
     {
-        string text = "Welcome to Web Scraper!\n\n";
-        text += "Menu guide:\n";
+        Console.ForegroundColor = ConsoleColor.Green;
+
+        string title = @"
+ ##   ##           ###       #####
+ ##   ##            ##      ##   ##
+ ##   ##   ####     ##      #         ####    ######    ####    ######    ####    ######
+ ## # ##  ##  ##    #####    #####   ##  ##    ##  ##      ##    ##  ##  ##  ##    ##  ##
+ #######  ######    ##  ##       ##  ##        ##       #####    ##  ##  ######    ##
+ ### ###  ##        ##  ##  ##   ##  ##  ##    ##      ##  ##    #####   ##        ##
+ ##   ##   #####   ######    #####    ####    ####      #####    ##       #####   ####
+                                                                ####
+                                                      
+";
+        Console.WriteLine(title);
+
+        string text = "Menu guide:\n";
         Console.WriteLine(text);
+
+        Console.ResetColor();
     }
 
     public static void MainMenu()
     {
+        Console.ForegroundColor = ConsoleColor.White;
+        
         string menu = "\n1 --> Activate command\n";
         menu += "0 --> Quit\n";
         Console.WriteLine(menu);
