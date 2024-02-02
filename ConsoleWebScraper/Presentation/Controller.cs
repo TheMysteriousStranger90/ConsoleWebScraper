@@ -48,10 +48,10 @@ public class Controller
                 }
             }
         }
-        catch (AggregateException e)
+        catch (InvalidOperationException)
         {
-            Console.WriteLine("\nException Caught!");
-            Console.WriteLine("Message :{0} ", e.Message);
+            Console.WriteLine("The URL you entered is not valid. Please try again.");
+            PleaseEnterAValidUrl();
         }
 
         _webScraperService.SaveUrlsToDoc(path1, _innerURLs);
