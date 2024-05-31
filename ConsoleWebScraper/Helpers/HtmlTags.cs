@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Net;
+using System.Text.RegularExpressions;
 
 namespace ConsoleWebScraper.Helpers;
 
@@ -6,19 +7,28 @@ public static class HtmlTags
 {
     public static void RemoveHtmlTags(StreamWriter writer, string htmlContent)
     {
-        string htmlTagPattern = "<.*?>";
-        string whitespacePattern = @"\n\s+";
+        var doc = new HtmlAgilityPack.HtmlDocument();
+        doc.LoadHtml(htmlContent);
 
-        var regexHtml = new Regex(htmlTagPattern);
-        var regexWhitespace = new Regex(whitespacePattern);
-
-        string noTags = regexHtml.Replace(htmlContent, string.Empty);
-        string trimmed = noTags.Trim();
-        string textOnly = regexWhitespace.Replace(trimmed, "\n");
-
-        if (!string.IsNullOrEmpty(textOnly))
+        var scriptNodes = doc.DocumentNode.DescendantsAndSelf().Where(n => n.Name == "script");
+        foreach (var scriptNode in scriptNodes.ToList())
         {
-            writer.WriteLine(textOnly);
+            scriptNode.Remove();
+        }
+
+        var jsonLdNodes = doc.DocumentNode.DescendantsAndSelf()
+            .Where(n => n.GetAttributeValue("type", "") == "application/ld+json");
+        foreach (var jsonLdNode in jsonLdNodes.ToList())
+        {
+            jsonLdNode.Remove();
+        }
+
+        string textOnly = doc.DocumentNode.InnerText;
+        string trimmed = textOnly.Trim();
+
+        if (!string.IsNullOrEmpty(trimmed))
+        {
+            writer.WriteLine(trimmed);
         }
     }
 }

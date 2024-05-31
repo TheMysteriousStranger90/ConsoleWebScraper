@@ -56,7 +56,7 @@ public class Controller
 
         _webScraperService.SaveUrlsToDoc(path1, _innerURLs);
         _webScraperService.SaveContentToDoc(path2, _htmlContent);
-        _webScraperService.SaveImagesToDoc(path3, _htmlContent);
+        _webScraperService.SaveImagesToDoc(path3, _htmlContent, _url);
 
         return "Created";
     }
@@ -64,14 +64,21 @@ public class Controller
     public void CreateSpecialFolder()
     {
         var desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        var projectFolder = Path.Combine(desktop, "WebScrapperProject");
+
+        if (!Directory.Exists(projectFolder))
+        {
+            Directory.CreateDirectory(projectFolder);
+        }
+
         var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
-        var projectFolder = Path.Combine(desktop, $"WebScrapperProject_{timestamp}");
+        var timestampFolder = Path.Combine(projectFolder, timestamp);
 
-        Directory.CreateDirectory(projectFolder);
+        Directory.CreateDirectory(timestampFolder);
 
-        path1 = Path.Combine(projectFolder, "List.txt");
-        path2 = Path.Combine(projectFolder, "Content.txt");
-        path3 = Path.Combine(projectFolder, "Images");
+        path1 = Path.Combine(timestampFolder, "List.txt");
+        path2 = Path.Combine(timestampFolder, "Content.txt");
+        path3 = Path.Combine(timestampFolder, "Images");
 
         Directory.CreateDirectory(path3);
     }

@@ -47,15 +47,15 @@ public class WebScraperService : IWebScraperService
         }
     }
 
-    public async Task SaveImagesToDoc(string fileName, string _htmlContent)
+    public async Task SaveImagesToDoc(string fileName, string _htmlContent, string baseUrl)
     {
         Directory.CreateDirectory(fileName);
-        MatchCollection mc = Regex.Matches(_htmlContent, @"<(img)\b[^>]*>");
-        List<string> imageURLs = new List<string>();
-        foreach (Match m in mc)
-        {
-            imageURLs.Add(m.ToString());
-        }
+
+        var doc = new HtmlAgilityPack.HtmlDocument();
+        doc.LoadHtml(_htmlContent);
+
+        var imageNodes = doc.DocumentNode.DescendantsAndSelf().Where(n => n.Name == "img");
+        List<string> imageURLs = imageNodes.Select(n => n.GetAttributeValue("src", "")).ToList();
 
         int pictureNumber = 1;
 
@@ -72,8 +72,10 @@ public class WebScraperService : IWebScraperService
                     {
                         if (part.Contains(extension))
                         {
+                            string absoluteUrl = part.StartsWith("http") ? part : baseUrl + part;
+
                             Uri uri;
-                            if (Uri.TryCreate(part, UriKind.Absolute, out uri))
+                            if (Uri.TryCreate(absoluteUrl, UriKind.Absolute, out uri))
                             {
                                 var response = await client.GetAsync(uri);
                                 if (response.IsSuccessStatusCode)
@@ -82,7 +84,6 @@ public class WebScraperService : IWebScraperService
                                     await File.WriteAllBytesAsync($"{fileName}\\Images{pictureNumber}{extension}",
                                         bytes);
                                     pictureNumber++;
-                                    Console.WriteLine(part);
                                     break;
                                 }
                             }
