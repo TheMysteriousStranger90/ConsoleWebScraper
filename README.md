@@ -38,3 +38,7 @@ Bohdan Harabadzhyu
 ## License
 
 This project is licensed under the terms of the GNU General Public License v3.0 (GPL-3.0) - see the [LICENSE](LICENSE) file for details.
+
+## SourceForge
+
+[![Download ConsoleWebScraper](https://a.fsdn.com/con/app/sf-download-button)](https://sourceforge.net/projects/consolewebscraper/files/latest/download)
