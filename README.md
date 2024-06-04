@@ -21,6 +21,7 @@ ConsoleWebScraper is a simple console application that allows you to scrape web 
     .\ConsoleWebScraper.exe
     ```
 4. When you start the application, you'll see a title and a menu guide. The menu guide will tell you what commands you can use.
+5. After the application has successfully completed its operation, the results will be saved on your desktop in a folder named "WebScrapperProject".
 
 ## Note
 
@@ -33,3 +34,7 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 ## Author
 
 Bohdan Harabadzhyu
+
+## License
+
+This project is licensed under the terms of the GNU General Public License v3.0 (GPL-3.0) - see the [LICENSE](LICENSE) file for details.

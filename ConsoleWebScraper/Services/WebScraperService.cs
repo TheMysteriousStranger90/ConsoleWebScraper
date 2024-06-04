@@ -54,42 +54,28 @@ public class WebScraperService : IWebScraperService
         var doc = new HtmlAgilityPack.HtmlDocument();
         doc.LoadHtml(_htmlContent);
 
-        var imageNodes = doc.DocumentNode.DescendantsAndSelf().Where(n => n.Name == "img");
-        List<string> imageURLs = imageNodes.Select(n => n.GetAttributeValue("src", "")).ToList();
-
-        int pictureNumber = 1;
-
-        string[] extensions = { ".jpg", ".png", ".svg" };
+        var images = doc.DocumentNode.Descendants("img")
+            .Select(e => e.GetAttributeValue("src", null))
+            .Where(src => !string.IsNullOrEmpty(src))
+            .Select(src => new Uri(new Uri(baseUrl), src).AbsoluteUri)
+            .ToList();
 
         using (HttpClient client = new HttpClient())
         {
-            foreach (var item in imageURLs)
+            int pictureNumber = 1;
+            foreach (var img in images)
             {
-                string[] split = item.Split(new Char[] { '"', '?' });
-                foreach (var part in split)
+                try
                 {
-                    foreach (var extension in extensions)
-                    {
-                        if (part.Contains(extension))
-                        {
-                            string absoluteUrl = part.StartsWith("http") ? part : baseUrl + part;
-
-                            Uri uri;
-                            if (Uri.TryCreate(absoluteUrl, UriKind.Absolute, out uri))
-                            {
-                                var response = await client.GetAsync(uri);
-                                if (response.IsSuccessStatusCode)
-                                {
-                                    var bytes = await response.Content.ReadAsByteArrayAsync();
-                                    await File.WriteAllBytesAsync($"{fileName}\\Images{pictureNumber}{extension}",
-                                        bytes);
-                                    pictureNumber++;
-                                    break;
-                                }
-                            }
-                        }
-                    }
+                    var imageBytes = await client.GetByteArrayAsync(img);
+                    var extension = Path.GetExtension(new Uri(img).AbsolutePath);
+                    await File.WriteAllBytesAsync($"{fileName}\\Images{pictureNumber}{extension}", imageBytes);
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to download or save image {img}: {ex.Message}");
+                }
+                pictureNumber++;
             }
         }
     }
