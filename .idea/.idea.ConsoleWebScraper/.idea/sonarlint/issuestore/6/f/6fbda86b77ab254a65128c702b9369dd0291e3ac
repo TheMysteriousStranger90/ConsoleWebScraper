@@ -1,6 +1,0 @@
-
-acsharpsquid:S3878D"8Remove this array creation and simply pass the elements.(»‹Šáùÿÿÿÿ8£ò²Ø¹1
-vcsharpsquid:S37762"RRefactor this method to reduce its Cognitive Complexity from 22 to the 15 allowed.(í´õ“8£ò²Ø¹1
-acsharpsquid:S3267G"8Loops should be simplified using the "Where" LINQ method(ßÍŽÜÿÿÿÿÿ8£ò²Ø¹1
-ocsharpsquid:S927#"LRename parameter 'text' to 'htmlContent' to match the interface declaration.(ÏïÌÁ8¢Õ—Ú¹1
-wcsharpsquid:S9272"TRename parameter '_htmlContent' to 'htmlContent' to match the interface declaration.(í´õ“8¢Õ—Ú¹1
