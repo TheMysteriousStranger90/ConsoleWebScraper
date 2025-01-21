@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Text;
 using ConsoleWebScraper.Helpers;
 using ConsoleWebScraper.Interfaces;
 using ConsoleWebScraper.Logging;
@@ -47,8 +48,8 @@ public class WebScraperService : IWebScraperService
     {
         try
         {
-            await using var writer = new StreamWriter(fileName);
-            HtmlTags.RemoveHtmlTags(writer, htmlContent);
+            await using var writer = new StreamWriter(fileName, false, Encoding.UTF8);
+            await HtmlTags.RemoveHtmlTagsAsync(writer, htmlContent);
             Logger.Log($"Content saved to {fileName}", LogLevel.Success);
         }
         catch (Exception ex)
