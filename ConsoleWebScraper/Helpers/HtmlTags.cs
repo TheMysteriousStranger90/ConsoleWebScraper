@@ -1,7 +1,4 @@
-﻿using System.Net;
-using System.Text.RegularExpressions;
-
-namespace ConsoleWebScraper.Helpers;
+﻿namespace ConsoleWebScraper.Helpers;
 
 public static class HtmlTags
 {
