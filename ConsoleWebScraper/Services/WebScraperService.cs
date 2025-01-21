@@ -1,82 +1,120 @@
 ﻿using System.Net;
 using System.Text;
-using System.Text.RegularExpressions;
 using ConsoleWebScraper.Helpers;
 using ConsoleWebScraper.Interfaces;
+using ConsoleWebScraper.Logging;
 
 namespace ConsoleWebScraper.Services;
 
 public class WebScraperService : IWebScraperService
 {
-    public async Task SaveUrlsToDoc(string fileName, List<string> innerUrls)
-    {
-        if (string.IsNullOrEmpty(fileName))
-        {
-            throw new ArgumentException("Output file name cannot be null or empty.", nameof(fileName));
-        }
+    private readonly SemaphoreSlim _throttler = new(5);
+    private readonly HttpClient _httpClient;
 
-        try
+    public WebScraperService()
+    {
+        var handler = new HttpClientHandler
         {
-            using (var writer = new StreamWriter(fileName))
-            {
-                foreach (var url in innerUrls)
-                {
-                    await writer.WriteLineAsync(url);
-                }
-            }
-        }
-        catch (IOException ex)
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+        };
+
+        _httpClient = new HttpClient(handler)
         {
-            Console.WriteLine(
-                $"An error occurred while saving the file: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
-        }
+            Timeout = TimeSpan.FromSeconds(30)
+        };
+        _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 WebScraper/1.0");
     }
 
-    public async Task SaveContentToDoc(string fileName, string text)
+    public async Task SaveUrlsToDoc(string? fileName, List<string> innerUrls)
     {
         try
         {
-            using (var writer = new StreamWriter(fileName, false, Encoding.UTF8))
-            {
-                HtmlTags.RemoveHtmlTags(writer, text);
-            }
+            var validUrls = innerUrls
+                .Where(url => Uri.TryCreate(url, UriKind.Absolute, out _))
+                .Distinct()
+                .ToList();
+
+            await File.WriteAllLinesAsync(fileName, validUrls);
+            Logger.Log($"Saved {validUrls.Count} URLs to {fileName}", LogLevel.Success);
         }
-        catch (IOException ex)
+        catch (Exception ex)
         {
-            Console.WriteLine($"Cannot save file {fileName}: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+            Logger.Log($"Error saving URLs: {ex.Message}", LogLevel.Error);
+            throw;
         }
     }
 
-    public async Task SaveImagesToDoc(string fileName, string _htmlContent, string baseUrl)
+    public async Task SaveContentToDoc(string? fileName, string htmlContent)
     {
-        Directory.CreateDirectory(fileName);
+        try
+        {
+            await using var writer = new StreamWriter(fileName, false, Encoding.UTF8);
+            await HtmlTags.RemoveHtmlTagsAsync(writer, htmlContent);
+            Logger.Log($"Content saved to {fileName}", LogLevel.Success);
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"Error saving content: {ex.Message}", LogLevel.Error);
+            throw;
+        }
+    }
 
+    public async Task SaveImagesToDoc(string? fileName, string htmlContent, string baseUrl)
+    {
         var doc = new HtmlAgilityPack.HtmlDocument();
-        doc.LoadHtml(_htmlContent);
+        doc.LoadHtml(htmlContent);
 
-        var images = doc.DocumentNode.Descendants("img")
-            .Select(e => e.GetAttributeValue("src", null))
-            .Where(src => !string.IsNullOrEmpty(src))
-            .Select(src => new Uri(new Uri(baseUrl), src).AbsoluteUri)
-            .ToList();
+        var imageNodes = doc.DocumentNode.SelectNodes("//img");
+        if (imageNodes == null) return;
 
-        using (HttpClient client = new HttpClient())
+        var baseUri = new Uri(baseUrl);
+        var tasks = new List<Task>();
+
+        foreach (var imgNode in imageNodes)
         {
-            int pictureNumber = 1;
-            foreach (var img in images)
+            var src = imgNode.GetAttributeValue("src", null);
+            if (string.IsNullOrEmpty(src)) continue;
+
+            try
             {
-                try
-                {
-                    var imageBytes = await client.GetByteArrayAsync(img);
-                    var extension = Path.GetExtension(new Uri(img).AbsolutePath);
-                    await File.WriteAllBytesAsync($"{fileName}\\Images{pictureNumber}{extension}", imageBytes);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Failed to download or save image {img}: {ex.Message}");
-                }
-                pictureNumber++;
+                var imageUrl = new Uri(baseUri, src);
+                tasks.Add(DownloadImageAsync(imageUrl, fileName));
             }
+            catch (Exception ex)
+            {
+                Logger.Log($"Invalid image URL {src}: {ex.Message}", LogLevel.Warning);
+            }
+        }
+
+        await Task.WhenAll(tasks);
+    }
+
+    private async Task DownloadImageAsync(Uri imageUrl, string? savePath)
+    {
+        await _throttler.WaitAsync();
+        try
+        {
+            var fileName = Path.GetFileName(imageUrl.LocalPath);
+            var filePath = Path.Combine(savePath, fileName);
+
+            var response = await _httpClient.GetAsync(imageUrl);
+            if (!response.IsSuccessStatusCode)
+            {
+                Logger.Log($"Failed to download {imageUrl}: {response.StatusCode}", LogLevel.Warning);
+                return;
+            }
+
+            await using var fs = new FileStream(filePath, FileMode.Create);
+            await response.Content.CopyToAsync(fs);
+            Logger.Log($"Downloaded {fileName}", LogLevel.Success);
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"Error downloading {imageUrl}: {ex.Message}", LogLevel.Error);
+        }
+        finally
+        {
+            _throttler.Release();
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Text.RegularExpressions;
 using ConsoleWebScraper.Interfaces;
+using ConsoleWebScraper.Logging;
 using ConsoleWebScraper.Services;
 using Ninject;
 
@@ -9,14 +10,14 @@ namespace ConsoleWebScraper.Presentation;
 public class Controller
 {
     private readonly IWebScraperService _webScraperService;
-    private HttpClient _client;
-    private string _htmlContent { get; set; }
-    private string _url { get; set; }
-    public List<string> _innerURLs { get; set; }
+    private readonly HttpClient _client;
+    private string HtmlContent { get; set; }
+    private string Url { get; set; }
+    private List<string> _innerURLs { get; set; }
 
-    private static string path1;
-    private static string path2;
-    private static string path3;
+    private static string? path1;
+    private static string? path2;
+    private static string? path3;
 
     public Controller(IKernel kernel)
     {
@@ -25,23 +26,23 @@ public class Controller
         _innerURLs = new List<string>();
     }
 
-    public string PleaseEnterAValidUrl()
+    public async Task<string> PleaseEnterAValidUrl()
     {
         CreateSpecialFolder();
         Console.WriteLine("Please enter a valid URL: ");
         Console.WriteLine("\n");
 
-        _url = Console.ReadLine();
+        Url = Console.ReadLine();
 
         try
         {
-            HttpResponseMessage response = _client.GetAsync(_url).Result;
-            _htmlContent = response.Content.ReadAsStringAsync().Result;
+            HttpResponseMessage response = await _client.GetAsync(Url);
+            HtmlContent = await response.Content.ReadAsStringAsync();
             Regex regExpression = new Regex("(?:href)=[\"|']?(.*?)[\"|'|>]+",
                 RegexOptions.Singleline | RegexOptions.CultureInvariant);
-            if (regExpression.IsMatch(_htmlContent))
+            if (regExpression.IsMatch(HtmlContent))
             {
-                foreach (Match match in regExpression.Matches(_htmlContent))
+                foreach (Match match in regExpression.Matches(HtmlContent))
                 {
                     string matchValue = match.Groups[1].Value;
                     _innerURLs.Add(matchValue);
@@ -51,13 +52,16 @@ public class Controller
         catch (InvalidOperationException)
         {
             Console.WriteLine("The URL you entered is not valid. Please try again.");
-            PleaseEnterAValidUrl();
+            return await PleaseEnterAValidUrl();
         }
 
-        _webScraperService.SaveUrlsToDoc(path1, _innerURLs);
-        _webScraperService.SaveContentToDoc(path2, _htmlContent);
-        _webScraperService.SaveImagesToDoc(path3, _htmlContent, _url);
-
+        await _webScraperService.SaveUrlsToDoc(path1, _innerURLs);
+        await _webScraperService.SaveContentToDoc(path2, HtmlContent);
+        await _webScraperService.SaveImagesToDoc(path3, HtmlContent, Url);
+        
+        await Task.Delay(1000);
+        Console.Clear();
+    
         return "Created";
     }
 
@@ -81,6 +85,9 @@ public class Controller
         path3 = Path.Combine(timestampFolder, "Images");
 
         Directory.CreateDirectory(path3);
+        
+        Logger.Initialize(timestampFolder);
+        Logger.Log("Web scraper session started", LogLevel.Info);
     }
 
     public string Exit()

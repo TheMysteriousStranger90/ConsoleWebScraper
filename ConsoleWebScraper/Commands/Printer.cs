@@ -28,7 +28,7 @@ public static class Printer
     public static void MainMenu()
     {
         Console.ForegroundColor = ConsoleColor.White;
-        
+
         string menu = "\n1 --> Activate command\n";
         menu += "0 --> Quit\n";
         Console.WriteLine(menu);
