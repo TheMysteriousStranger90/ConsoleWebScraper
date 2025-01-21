@@ -42,3 +42,10 @@ This project is licensed under the terms of the GNU General Public License v3.0 
 ## SourceForge
 
 [![Download ConsoleWebScraper](https://a.fsdn.com/con/app/sf-download-button)](https://sourceforge.net/projects/consolewebscraper/files/latest/download)
+
+## YouTube Review
+<details>
+<summary>📺 Watch Video Review</summary>
+
+[![YouTube](http://i.ytimg.com/vi/ty4IQVZIEPg/hqdefault.jpg)](https://www.youtube.com/watch?v=ty4IQVZIEPg)
+</details>

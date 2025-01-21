@@ -6,8 +6,7 @@ public static class HtmlTags
     {
         var doc = new HtmlAgilityPack.HtmlDocument();
         doc.LoadHtml(htmlContent);
-
-        // Remove unwanted nodes
+        
         var nodesToRemove = doc.DocumentNode.SelectNodes("//script|//style|//meta|//link|//comment()");
         nodesToRemove?.ToList().ForEach(node => node.Remove());
         
